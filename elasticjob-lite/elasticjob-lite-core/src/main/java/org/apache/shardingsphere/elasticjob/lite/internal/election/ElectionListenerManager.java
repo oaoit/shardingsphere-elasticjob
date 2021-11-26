@@ -17,6 +17,7 @@
 
 package org.apache.shardingsphere.elasticjob.lite.internal.election;
 
+import org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type;
 import org.apache.shardingsphere.elasticjob.infra.handler.sharding.JobInstance;
 import org.apache.shardingsphere.elasticjob.lite.internal.listener.AbstractJobListener;
 import org.apache.shardingsphere.elasticjob.lite.internal.listener.AbstractListenerManager;
@@ -77,7 +78,7 @@ public final class ElectionListenerManager extends AbstractListenerManager {
         }
         
         private boolean isLeaderCrashed(final String path, final Type eventType) {
-            return leaderNode.isLeaderInstancePath(path) && Type.NODE_DELETED == eventType;
+            return leaderNode.isLeaderInstancePath(path) && Type.NODE_REMOVED == eventType;
         }
         
         private boolean isLocalServerEnabled(final String path, final String data) {

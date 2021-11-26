@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.elasticjob.lite.internal.instance;
 
-import org.apache.curator.framework.recipes.cache.CuratorCacheListener.Type;
+import org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type;
 import org.apache.shardingsphere.elasticjob.infra.handler.sharding.JobInstance;
 import org.apache.shardingsphere.elasticjob.lite.internal.schedule.JobRegistry;
 import org.apache.shardingsphere.elasticjob.lite.internal.schedule.JobScheduleController;
@@ -79,7 +79,7 @@ public final class ShutdownListenerManagerTest {
     
     @Test
     public void assertIsShutdownAlready() {
-        shutdownListenerManager.new InstanceShutdownStatusJobListener().dataChanged("/test_job/instances/127.0.0.1@-@0", Type.NODE_DELETED, "");
+        shutdownListenerManager.new InstanceShutdownStatusJobListener().dataChanged("/test_job/instances/127.0.0.1@-@0", Type.NODE_REMOVED, "");
         verify(schedulerFacade, times(0)).shutdownInstance();
     }
     
@@ -87,7 +87,7 @@ public final class ShutdownListenerManagerTest {
     public void assertIsNotLocalInstancePath() {
         JobRegistry.getInstance().registerRegistryCenter("test_job", regCenter);
         JobRegistry.getInstance().registerJob("test_job", jobScheduleController);
-        shutdownListenerManager.new InstanceShutdownStatusJobListener().dataChanged("/test_job/instances/127.0.0.2@-@0", Type.NODE_DELETED, "");
+        shutdownListenerManager.new InstanceShutdownStatusJobListener().dataChanged("/test_job/instances/127.0.0.2@-@0", Type.NODE_REMOVED, "");
         verify(schedulerFacade, times(0)).shutdownInstance();
     }
     
@@ -95,7 +95,7 @@ public final class ShutdownListenerManagerTest {
     public void assertUpdateLocalInstancePath() {
         JobRegistry.getInstance().registerRegistryCenter("test_job", regCenter);
         JobRegistry.getInstance().registerJob("test_job", jobScheduleController);
-        shutdownListenerManager.new InstanceShutdownStatusJobListener().dataChanged("/test_job/instances/127.0.0.1@-@0", Type.NODE_CHANGED, "");
+        shutdownListenerManager.new InstanceShutdownStatusJobListener().dataChanged("/test_job/instances/127.0.0.1@-@0", Type.NODE_REMOVED, "");
         verify(schedulerFacade, times(0)).shutdownInstance();
     }
     
@@ -104,7 +104,7 @@ public final class ShutdownListenerManagerTest {
         JobRegistry.getInstance().registerRegistryCenter("test_job", regCenter);
         JobRegistry.getInstance().registerJob("test_job", jobScheduleController);
         when(jobScheduleController.isPaused()).thenReturn(true);
-        shutdownListenerManager.new InstanceShutdownStatusJobListener().dataChanged("/test_job/instances/127.0.0.1@-@0", Type.NODE_DELETED, "");
+        shutdownListenerManager.new InstanceShutdownStatusJobListener().dataChanged("/test_job/instances/127.0.0.1@-@0", Type.NODE_REMOVED, "");
         verify(schedulerFacade, times(0)).shutdownInstance();
     }
     
@@ -113,7 +113,7 @@ public final class ShutdownListenerManagerTest {
         JobRegistry.getInstance().registerRegistryCenter("test_job", regCenter);
         JobRegistry.getInstance().registerJob("test_job", jobScheduleController);
         when(instanceService.isLocalJobInstanceExisted()).thenReturn(true);
-        shutdownListenerManager.new InstanceShutdownStatusJobListener().dataChanged("/test_job/instances/127.0.0.1@-@0", Type.NODE_DELETED, "");
+        shutdownListenerManager.new InstanceShutdownStatusJobListener().dataChanged("/test_job/instances/127.0.0.1@-@0", Type.NODE_REMOVED, "");
         verify(schedulerFacade, times(0)).shutdownInstance();
     }
     
@@ -121,7 +121,7 @@ public final class ShutdownListenerManagerTest {
     public void assertRemoveLocalInstancePath() {
         JobRegistry.getInstance().registerRegistryCenter("test_job", regCenter);
         JobRegistry.getInstance().registerJob("test_job", jobScheduleController);
-        shutdownListenerManager.new InstanceShutdownStatusJobListener().dataChanged("/test_job/instances/127.0.0.1@-@0", Type.NODE_DELETED, "");
+        shutdownListenerManager.new InstanceShutdownStatusJobListener().dataChanged("/test_job/instances/127.0.0.1@-@0", Type.NODE_REMOVED, "");
         verify(schedulerFacade).shutdownInstance();
     }
 }

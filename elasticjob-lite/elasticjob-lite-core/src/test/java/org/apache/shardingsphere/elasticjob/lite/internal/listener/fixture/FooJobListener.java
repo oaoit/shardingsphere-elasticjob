@@ -18,15 +18,16 @@
 package org.apache.shardingsphere.elasticjob.lite.internal.listener.fixture;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type;
 import org.apache.shardingsphere.elasticjob.lite.internal.listener.AbstractJobListener;
 
 import java.util.List;
 
 @RequiredArgsConstructor
 public final class FooJobListener extends AbstractJobListener {
-    
+
     private final List list;
-    
+
     @Override
     protected void dataChanged(final String path, final Type eventType, final String data) {
         list.clear();

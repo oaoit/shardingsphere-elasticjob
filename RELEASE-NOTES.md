@@ -1,4 +1,4 @@
-## 3.0.1
+## 3.0.1-curator4
 
 ### Enhancements
 
@@ -15,7 +15,7 @@
 
 ### Change Logs
 
-1. [MILESTONE 3.0.1](https://github.com/apache/shardingsphere-elasticjob/milestone/6)
+1. [MILESTONE 3.0.1-curator4](https://github.com/apache/shardingsphere-elasticjob/milestone/6)
 
 
 ## 3.0.0
@@ -94,7 +94,7 @@
 ### Build & Dependencies
 
 1. Upgrade the minimum supported version of JDK to Java8
-1. Update Zookeeper to version 3.6.x and curator to version 5.1.0
+1. Update Zookeeper to version 3.4.x and curator to version 4.3.0
 1. Update Google Guava to version 29.0-jre
 
 ### API Changes

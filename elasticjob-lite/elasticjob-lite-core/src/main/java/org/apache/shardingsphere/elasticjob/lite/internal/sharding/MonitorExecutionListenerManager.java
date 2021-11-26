@@ -17,6 +17,7 @@
 
 package org.apache.shardingsphere.elasticjob.lite.internal.sharding;
 
+import org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type;
 import org.apache.shardingsphere.elasticjob.infra.yaml.YamlEngine;
 import org.apache.shardingsphere.elasticjob.lite.internal.config.ConfigurationNode;
 import org.apache.shardingsphere.elasticjob.infra.pojo.JobConfigurationPOJO;
@@ -48,7 +49,7 @@ public final class MonitorExecutionListenerManager extends AbstractListenerManag
         
         @Override
         protected void dataChanged(final String path, final Type eventType, final String data) {
-            if (configNode.isConfigPath(path) && Type.NODE_CHANGED == eventType && !YamlEngine.unmarshal(data, JobConfigurationPOJO.class).toJobConfiguration().isMonitorExecution()) {
+            if (configNode.isConfigPath(path) && Type.NODE_REMOVED == eventType && !YamlEngine.unmarshal(data, JobConfigurationPOJO.class).toJobConfiguration().isMonitorExecution()) {
                 executionService.clearAllRunningInfo();
             }
         }

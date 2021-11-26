@@ -33,32 +33,32 @@ import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public final class JobListenerTest {
-    
+
     @Mock
     private ChildData childData;
-    
+
     @Mock
     private List list;
-    
+
     private FooJobListener fooJobListener;
-    
+
     @Before
     public void setUp() {
         fooJobListener = new FooJobListener(list);
     }
-    
+
     @Test
     public void assertChildEventWhenEventDataIsEmpty() {
         when(childData.getPath()).thenReturn("");
-        fooJobListener.event(null, null, childData);
+        fooJobListener.childEvent(null, null);
         verify(list, times(0)).clear();
     }
-    
+
     @Test
     public void assertChildEventSuccess() {
         when(childData.getPath()).thenReturn("/test");
         when(childData.getData()).thenReturn("test".getBytes());
-        fooJobListener.event(null, null, childData);
+        fooJobListener.childEvent(null, null);
         verify(list).clear();
     }
 }

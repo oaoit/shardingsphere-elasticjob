@@ -20,7 +20,7 @@ package org.apache.shardingsphere.elasticjob.lite.internal.snapshot;
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.recipes.cache.ChildData;
-import org.apache.curator.framework.recipes.cache.CuratorCache;
+import org.apache.curator.framework.recipes.cache.TreeCache;
 import org.apache.shardingsphere.elasticjob.lite.internal.util.SensitiveInfoUtils;
 import org.apache.shardingsphere.elasticjob.reg.base.CoordinatorRegistryCenter;
 
@@ -40,23 +40,23 @@ import java.util.Optional;
  */
 @Slf4j
 public final class SnapshotService {
-    
+
     public static final String DUMP_COMMAND = "dump@";
 
     private final int port;
-    
+
     private final CoordinatorRegistryCenter regCenter;
-    
+
     private ServerSocket serverSocket;
-    
+
     private volatile boolean closed;
-    
+
     public SnapshotService(final CoordinatorRegistryCenter regCenter, final int port) {
         Preconditions.checkArgument(port >= 0 && port <= 0xFFFF, "Port value out of range: " + port);
         this.regCenter = regCenter;
         this.port = port;
     }
-    
+
     /**
      * Start to listen.
      */
@@ -67,7 +67,7 @@ public final class SnapshotService {
             log.error("ElasticJob: Snapshot service listen failure, error is: ", ex);
         }
     }
-    
+
     private int openSocket(final int port) throws IOException {
         serverSocket = new ServerSocket(port);
         int localPort = serverSocket.getLocalPort();
@@ -86,11 +86,11 @@ public final class SnapshotService {
         }, threadName).start();
         return localPort;
     }
-    
+
     private boolean isIgnoredException() {
         return serverSocket.isClosed();
     }
-    
+
     private void process(final Socket socket) throws IOException {
         try (
                 BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -105,16 +105,16 @@ public final class SnapshotService {
             }
         }
     }
-    
+
     private void dumpDirectly(final String path, final String jobName, final List<String> result) {
         for (String each : regCenter.getChildrenKeys(path)) {
             String zkPath = path + "/" + each;
             String zkValue = Optional.ofNullable(regCenter.get(zkPath)).orElse("");
             String cachePath = zkPath;
             String cacheValue = zkValue;
-            CuratorCache cache = (CuratorCache) regCenter.getRawCache("/" + jobName);
+            TreeCache cache = (TreeCache) regCenter.getRawCache("/" + jobName);
             if (null != cache) {
-                Optional<ChildData> cacheData = cache.get(zkPath);
+                Optional<ChildData> cacheData = Optional.ofNullable(cache.getCurrentData(zkPath));
                 cachePath = cacheData.map(ChildData::getPath).orElse("");
                 cacheValue = cacheData.map(ChildData::getData).map(String::new).orElse("");
             }
@@ -126,12 +126,12 @@ public final class SnapshotService {
             dumpDirectly(zkPath, jobName, result);
         }
     }
-    
+
     private void outputMessage(final BufferedWriter outputWriter, final String msg) throws IOException {
         outputWriter.append(msg);
         outputWriter.flush();
     }
-    
+
     /**
      * Close listener.
      */

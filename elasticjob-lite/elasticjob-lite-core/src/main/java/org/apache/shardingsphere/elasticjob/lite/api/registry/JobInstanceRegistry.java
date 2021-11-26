@@ -18,7 +18,8 @@
 package org.apache.shardingsphere.elasticjob.lite.api.registry;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.curator.framework.recipes.cache.CuratorCache;
+import org.apache.curator.framework.recipes.cache.TreeCache;
+import org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type;
 import org.apache.shardingsphere.elasticjob.api.ElasticJob;
 import org.apache.shardingsphere.elasticjob.api.JobConfiguration;
 import org.apache.shardingsphere.elasticjob.infra.handler.sharding.JobInstance;
@@ -51,15 +52,15 @@ public final class JobInstanceRegistry {
      * Register.
      */
     public void register() {
-        CuratorCache cache = (CuratorCache) regCenter.getRawCache("/");
-        cache.listenable().addListener(new JobInstanceRegistryListener());
+        TreeCache cache = (TreeCache) regCenter.getRawCache("/");
+        cache.getListenable().addListener(new JobInstanceRegistryListener());
     }
     
     public class JobInstanceRegistryListener extends AbstractJobListener {
         
         @Override
         protected void dataChanged(final String path, final Type eventType, final String data) {
-            if (eventType != Type.NODE_CREATED || !isJobConfigPath(path)) {
+            if (eventType != Type.NODE_ADDED || !isJobConfigPath(path)) {
                 return;
             }
             JobConfiguration jobConfig = YamlEngine.unmarshal(data, JobConfigurationPOJO.class).toJobConfiguration();

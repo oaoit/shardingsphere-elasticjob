@@ -17,6 +17,7 @@
 
 package org.apache.shardingsphere.elasticjob.lite.internal.failover;
 
+import org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type;
 import org.apache.shardingsphere.elasticjob.infra.pojo.JobConfigurationPOJO;
 import org.apache.shardingsphere.elasticjob.infra.yaml.YamlEngine;
 import org.apache.shardingsphere.elasticjob.lite.internal.config.ConfigurationNode;
@@ -71,7 +72,7 @@ public final class FailoverListenerManager extends AbstractListenerManager {
         
         @Override
         protected void dataChanged(final String path, final Type eventType, final String data) {
-            if (!JobRegistry.getInstance().isShutdown(jobName) && isFailoverEnabled() && Type.NODE_DELETED == eventType && instanceNode.isInstancePath(path)) {
+            if (!JobRegistry.getInstance().isShutdown(jobName) && isFailoverEnabled() && Type.NODE_REMOVED == eventType && instanceNode.isInstancePath(path)) {
                 String jobInstanceId = path.substring(instanceNode.getInstanceFullPath().length() + 1);
                 if (jobInstanceId.equals(JobRegistry.getInstance().getJobInstance(jobName).getJobInstanceId())) {
                     return;
@@ -96,7 +97,7 @@ public final class FailoverListenerManager extends AbstractListenerManager {
         
         @Override
         protected void dataChanged(final String path, final Type eventType, final String data) {
-            if (configNode.isConfigPath(path) && Type.NODE_CHANGED == eventType && !YamlEngine.unmarshal(data, JobConfigurationPOJO.class).toJobConfiguration().isFailover()) {
+            if (configNode.isConfigPath(path) && Type.NODE_REMOVED == eventType && !YamlEngine.unmarshal(data, JobConfigurationPOJO.class).toJobConfiguration().isFailover()) {
                 failoverService.removeFailoverInfo();
             }
         }

@@ -19,9 +19,11 @@ package org.apache.shardingsphere.elasticjob.cloud.scheduler.config.app;
 
 import com.google.gson.JsonParseException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.curator.framework.recipes.cache.ChildData;
-import org.apache.curator.framework.recipes.cache.CuratorCache;
-import org.apache.curator.framework.recipes.cache.CuratorCacheListener;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.recipes.cache.TreeCache;
+import org.apache.curator.framework.recipes.cache.TreeCacheEvent;
+import org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type;
+import org.apache.curator.framework.recipes.cache.TreeCacheListener;
 import org.apache.mesos.Protos;
 import org.apache.shardingsphere.elasticjob.cloud.scheduler.mesos.MesosStateService;
 import org.apache.shardingsphere.elasticjob.cloud.scheduler.producer.ProducerManager;
@@ -35,56 +37,56 @@ import java.util.concurrent.Executors;
  * Cloud app configuration change listener.
  */
 @Slf4j
-public final class CloudAppConfigurationListener implements CuratorCacheListener {
-    
+public final class CloudAppConfigurationListener implements TreeCacheListener {
+
     private final CoordinatorRegistryCenter regCenter;
-    
+
     private final ProducerManager producerManager;
-    
+
     private MesosStateService mesosStateService;
-    
+
     public CloudAppConfigurationListener(final CoordinatorRegistryCenter regCenter, final ProducerManager producerManager) {
         this.regCenter = regCenter;
         this.producerManager = producerManager;
         mesosStateService = new MesosStateService(regCenter);
     }
-    
+
     @Override
-    public void event(final Type type, final ChildData oldData, final ChildData data) {
-        String path = Type.NODE_DELETED == type ? oldData.getPath() : data.getPath();
-        if (Type.NODE_DELETED == type && isJobAppConfigNode(path)) {
+    public void childEvent(final CuratorFramework client, final TreeCacheEvent event) {
+        String path = event.getData().getPath();
+        if (Type.NODE_REMOVED == event.getType() && isJobAppConfigNode(path)) {
             String appName = path.substring(CloudAppConfigurationNode.ROOT.length() + 1);
             stopExecutors(appName);
         }
     }
-    
+
     private boolean isJobAppConfigNode(final String path) {
         return path.startsWith(CloudAppConfigurationNode.ROOT) && path.length() > CloudAppConfigurationNode.ROOT.length();
     }
-    
+
     /**
      * Start the listener service of the cloud job service.
      */
     public void start() {
-        getCache().listenable().addListener(this, Executors.newSingleThreadExecutor());
+        getCache().getListenable().addListener(this, Executors.newSingleThreadExecutor());
     }
-    
+
     /**
      * Stop the listener service of the cloud job service.
      */
     public void stop() {
-        getCache().listenable().removeListener(this);
+        getCache().getListenable().removeListener(this);
     }
-    
-    private CuratorCache getCache() {
-        CuratorCache result = (CuratorCache) regCenter.getRawCache(CloudAppConfigurationNode.ROOT);
+
+    private TreeCache getCache() {
+        TreeCache result = (TreeCache) regCenter.getRawCache(CloudAppConfigurationNode.ROOT);
         if (null != result) {
             return result;
         }
         regCenter.addCacheData(CloudAppConfigurationNode.ROOT);
-        return (CuratorCache) regCenter.getRawCache(CloudAppConfigurationNode.ROOT);
+        return (TreeCache) regCenter.getRawCache(CloudAppConfigurationNode.ROOT);
     }
-    
+
     private void stopExecutors(final String appName) {
         try {
             Collection<MesosStateService.ExecutorStateInfo> executorBriefInfo = mesosStateService.executors(appName);

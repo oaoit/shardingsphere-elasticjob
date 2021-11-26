@@ -17,6 +17,7 @@
 
 package org.apache.shardingsphere.elasticjob.lite.internal.guarantee;
 
+import org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type;
 import org.apache.shardingsphere.elasticjob.infra.listener.ElasticJobListener;
 import org.apache.shardingsphere.elasticjob.lite.api.listener.AbstractDistributeOnceElasticJobListener;
 import org.apache.shardingsphere.elasticjob.lite.internal.listener.AbstractJobListener;
@@ -29,28 +30,28 @@ import java.util.Collection;
  * Guarantee listener manager.
  */
 public final class GuaranteeListenerManager extends AbstractListenerManager {
-    
+
     private final GuaranteeNode guaranteeNode;
-    
+
     private final Collection<ElasticJobListener> elasticJobListeners;
-    
+
     public GuaranteeListenerManager(final CoordinatorRegistryCenter regCenter, final String jobName, final Collection<ElasticJobListener> elasticJobListeners) {
         super(regCenter, jobName);
         this.guaranteeNode = new GuaranteeNode(jobName);
         this.elasticJobListeners = elasticJobListeners;
     }
-    
+
     @Override
     public void start() {
         addDataListener(new StartedNodeRemovedJobListener());
         addDataListener(new CompletedNodeRemovedJobListener());
     }
-    
+
     class StartedNodeRemovedJobListener extends AbstractJobListener {
-        
+
         @Override
         protected void dataChanged(final String path, final Type eventType, final String data) {
-            if (Type.NODE_DELETED == eventType && guaranteeNode.isStartedRootNode(path)) {
+            if (Type.NODE_REMOVED == eventType && guaranteeNode.isStartedRootNode(path)) {
                 for (ElasticJobListener each : elasticJobListeners) {
                     if (each instanceof AbstractDistributeOnceElasticJobListener) {
                         ((AbstractDistributeOnceElasticJobListener) each).notifyWaitingTaskStart();
@@ -59,12 +60,12 @@ public final class GuaranteeListenerManager extends AbstractListenerManager {
             }
         }
     }
-    
+
     class CompletedNodeRemovedJobListener extends AbstractJobListener {
-        
+
         @Override
         protected void dataChanged(final String path, final Type eventType, final String data) {
-            if (Type.NODE_DELETED == eventType && guaranteeNode.isCompletedRootNode(path)) {
+            if (Type.NODE_REMOVED == eventType && guaranteeNode.isCompletedRootNode(path)) {
                 for (ElasticJobListener each : elasticJobListeners) {
                     if (each instanceof AbstractDistributeOnceElasticJobListener) {
                         ((AbstractDistributeOnceElasticJobListener) each).notifyWaitingTaskComplete();

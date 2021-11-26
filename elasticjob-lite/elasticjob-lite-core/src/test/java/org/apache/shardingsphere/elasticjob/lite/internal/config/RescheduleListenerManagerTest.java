@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.elasticjob.lite.internal.config;
 
-import org.apache.curator.framework.recipes.cache.CuratorCacheListener.Type;
+import org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type;
 import org.apache.shardingsphere.elasticjob.lite.fixture.LiteYamlConstants;
 import org.apache.shardingsphere.elasticjob.infra.handler.sharding.JobInstance;
 import org.apache.shardingsphere.elasticjob.lite.internal.schedule.JobRegistry;
@@ -63,19 +63,19 @@ public final class RescheduleListenerManagerTest {
     
     @Test
     public void assertCronSettingChangedJobListenerWhenIsNotCronPath() {
-        rescheduleListenerManager.new CronSettingAndJobEventChangedJobListener().dataChanged("/test_job/config/other", Type.NODE_CREATED, LiteYamlConstants.getJobYaml());
+        rescheduleListenerManager.new CronSettingAndJobEventChangedJobListener().dataChanged("/test_job/config/other", Type.NODE_ADDED, LiteYamlConstants.getJobYaml());
         verify(jobScheduleController, times(0)).rescheduleJob(any(), any());
     }
     
     @Test
     public void assertCronSettingChangedJobListenerWhenIsCronPathButNotUpdate() {
-        rescheduleListenerManager.new CronSettingAndJobEventChangedJobListener().dataChanged("/test_job/config", Type.NODE_CREATED, LiteYamlConstants.getJobYaml());
+        rescheduleListenerManager.new CronSettingAndJobEventChangedJobListener().dataChanged("/test_job/config", Type.NODE_ADDED, LiteYamlConstants.getJobYaml());
         verify(jobScheduleController, times(0)).rescheduleJob(any(), any());
     }
     
     @Test
     public void assertCronSettingChangedJobListenerWhenIsCronPathAndUpdateButCannotFindJob() {
-        rescheduleListenerManager.new CronSettingAndJobEventChangedJobListener().dataChanged("/test_job/config", Type.NODE_CHANGED, LiteYamlConstants.getJobYaml());
+        rescheduleListenerManager.new CronSettingAndJobEventChangedJobListener().dataChanged("/test_job/config", Type.NODE_REMOVED, LiteYamlConstants.getJobYaml());
         verify(jobScheduleController, times(0)).rescheduleJob(any(), any());
     }
     
@@ -84,7 +84,7 @@ public final class RescheduleListenerManagerTest {
         JobRegistry.getInstance().addJobInstance("test_job", new JobInstance("127.0.0.1@-@0"));
         JobRegistry.getInstance().registerRegistryCenter("test_job", regCenter);
         JobRegistry.getInstance().registerJob("test_job", jobScheduleController);
-        rescheduleListenerManager.new CronSettingAndJobEventChangedJobListener().dataChanged("/test_job/config", Type.NODE_CHANGED, LiteYamlConstants.getJobYaml());
+        rescheduleListenerManager.new CronSettingAndJobEventChangedJobListener().dataChanged("/test_job/config", Type.NODE_REMOVED, LiteYamlConstants.getJobYaml());
         verify(jobScheduleController).rescheduleJob("0/1 * * * * ?", null);
         JobRegistry.getInstance().shutdown("test_job");
     }
